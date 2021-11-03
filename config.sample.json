@@ -3,6 +3,7 @@
   "channel_chat_id": "",
   "pm_chat_id": "",
   "mastodon_host": "",
-  "mastodon_api_secret": "",
-  "mastodon_username": ""
+  "mastodon_api_access_token": "",
+  "mastodon_username": "",
+  "scope": ["public", "unlisted", "private", "direct"]
 }
