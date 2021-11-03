@@ -4,6 +4,7 @@
   "pm_chat_id": "",
   "mastodon_host": "",
   "mastodon_api_access_token": "",
+  "mastodon_app_name": "",
   "mastodon_username": "",
   "scope": ["public", "unlisted", "private", "direct"]
 }

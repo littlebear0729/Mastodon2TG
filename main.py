@@ -1,6 +1,7 @@
 import _thread
 import json
 
+import requests
 import telebot
 import websocket
 from markdownify import markdownify
@@ -15,13 +16,34 @@ channel_chat_id = config['channel_chat_id']
 pm_chat_id = config['pm_chat_id']
 mastodon_host = config['mastodon_host']
 mastodon_api_access_token = config['mastodon_api_access_token']
+mastodon_app_name = config['mastodon_app_name']
 mastodon_username = config['mastodon_username']
 
 bot = telebot.TeleBot(tg_bot_token, parse_mode=None)
 
+
 @bot.channel_post_handler()
-def log(message):
+def send_message_to_mastodon(message):
     print(message.chat.id, message)
+    try:
+        text = message.text
+        if "#noforward" in text:
+            return
+        header = {
+            'Authorization': f'Bearer {mastodon_api_access_token}'
+        }
+        data = {
+            'status': text,
+            'media_ids': [],
+            'poll': [],
+            'visibility': 'public',
+        }
+        requests.post(f"https://{mastodon_host}/api/v1/statuses", headers=header, data=data)
+        bot.send_message(pm_chat_id, f"{text}\nforwarded to mastodon.")
+    except Exception as e:
+        print(e)
+        bot.send_message(pm_chat_id, f"Exception: {e}")
+
 
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
@@ -29,11 +51,14 @@ def send_welcome(message):
     bot.reply_to(message, "Welcome to my bot!")
 
 
-def send_message(content):
+def send_message_to_channel(content):
     try:
         toot = json.loads(content['payload'])
         print(json.dumps(toot, ensure_ascii=False, indent=2))
-        if toot['account']['username'] == mastodon_username and toot['in_reply_to_id'] is None and toot['visibility'] in config['scope']:
+        if toot['account']['username'] == mastodon_username and \
+                toot['application']['name'] != mastodon_app_name and \
+                toot['in_reply_to_id'] is None and \
+                toot['visibility'] in config['scope']:
             txt = markdownify(toot['content'])
             txt += 'from: ' + toot['url']
             print(txt)
@@ -57,15 +82,16 @@ def on_message(ws, message):
     print("ws:", message)
     content = json.loads(message)
     if content['event'] == 'update':
-        send_message(content)
+        send_message_to_channel(content)
 
 
 def on_error(ws, error):
-    print(error)
+    print("ws error:", error)
 
 
 def websocketTest():
     websocket.enableTrace(True)
+    websocket.setdefaulttimeout(10)
     ws = websocket.WebSocketApp(
         f"wss://{mastodon_host}/api/v1/streaming?access_token={mastodon_api_access_token}&stream=user",
         on_message=on_message,

@@ -1,16 +1,25 @@
 # Mastodon2TG
 
-Sync mastodon toot to telegram channel or group.
+Sync mastodon toot and telegram channel or group in both direction.
 
 Using mastodon websocket API to fetch statuses update.
 
 ## Functions
 
-Sync mastodon toot to telegram channel or group.
+### Mastodon to Telegram
 
-Photos are supported.
+- [x] Text only message
+- [x] Text with photo
+- [ ] Poll...
 
-(Video may not working...)
+
+### Telegram to Mastodon
+
+- [x] Text only message
+- [ ] Photo
+- [ ] Medias...
+
+(Video and other media type may not working...)
 
 ## Usage
 
@@ -22,7 +31,8 @@ Get your telegram bot token from telegram: @botfather.
 
 Get your mastodon api token from your mastodon server.
 
+You can fork this project and modify the source code as you want.
 ## Todo
 
-- Sync telegram channel message to mastodon.
-- Support other message type. (Maybe poll?)
+- [x] Sync telegram channel message to mastodon.
+- [ ] Support other message type. (Maybe poll?)
