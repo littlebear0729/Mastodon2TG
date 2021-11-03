@@ -19,7 +19,7 @@ mastodon_username = config['mastodon_username']
 
 bot = telebot.TeleBot(tg_bot_token, parse_mode=None)
 
-@bot.message_handler()
+@bot.channel_post_handler()
 def log(message):
     print(message.chat.id, message)
 
