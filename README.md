@@ -10,6 +10,7 @@ Using mastodon websocket API to fetch statuses update.
 
 - [x] Text only message
 - [x] Text with photo
+- [x] Text with video
 - [ ] Poll...
 
 
@@ -36,3 +37,4 @@ You can fork this project and modify the source code as you want.
 
 - [x] Sync telegram channel message to mastodon.
 - [ ] Support other message type. (Maybe poll?)
+- [ ] Support reply message. (Maybe in both direction?)
