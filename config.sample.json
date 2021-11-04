@@ -6,5 +6,7 @@
   "mastodon_api_access_token": "",
   "mastodon_app_name": "",
   "mastodon_username": "",
-  "scope": ["public", "unlisted", "private", "direct"]
+  "scope": ["public", "unlisted", "private", "direct"],
+  "add_link_in_telegram": true,
+  "add_link_in_mastodon": false
 }

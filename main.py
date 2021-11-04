@@ -1,6 +1,7 @@
 import _thread
 import json
 import logging
+
 import requests
 import telebot
 import websocket
@@ -18,7 +19,8 @@ mastodon_host = config['mastodon_host']
 mastodon_api_access_token = config['mastodon_api_access_token']
 mastodon_app_name = config['mastodon_app_name']
 mastodon_username = config['mastodon_username']
-
+add_link_in_telegram = config['add_link_in_telegram']
+add_link_in_mastodon = config['add_link_in_mastodon']
 
 logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s %(levelname)s %(message)s',
@@ -30,7 +32,13 @@ logging.basicConfig(level=logging.INFO,
 bot = telebot.TeleBot(tg_bot_token, parse_mode=None)
 
 
-@bot.channel_post_handler()
+@bot.channel_post_handler(func=lambda message: message.chat.id != channel_chat_id)
+def wrong_channel(message):
+    logging.warning(f'Received message from wrong channel id: {message.chat.id}')
+    bot.reply_to(message, "This bot is only for specific channel.")
+
+
+@bot.channel_post_handler(func=lambda message: message.chat.id == channel_chat_id)
 def send_message_to_mastodon(message):
     logging.info(f'Received channel message from chatid: {message.chat.id} message: {message}')
     try:
@@ -38,6 +46,9 @@ def send_message_to_mastodon(message):
         if "#noforward" in text:
             logging.info('Do not forward this channel message to mastodon.')
             return
+        if add_link_in_mastodon:
+            link = f'from: https://t.me/c/{str(message.chat.id)[4:]}/{message.message_id}'
+            text += f'\n\n{link}'
         header = {
             'Authorization': f'Bearer {mastodon_api_access_token}'
         }
@@ -71,7 +82,8 @@ def send_message_to_channel(content):
                 toot['in_reply_to_id'] is None and \
                 toot['visibility'] in config['scope']:
             txt = markdownify(toot['content'])
-            txt += 'from: ' + toot['url']
+            if add_link_in_telegram:
+                txt += 'from: ' + toot['url']
             logging.info(f'Text sending to telegram: {txt}')
             if len(toot['media_attachments']) != 0:
                 medias = []
