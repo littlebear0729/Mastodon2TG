@@ -29,7 +29,7 @@ logging.basicConfig(level=logging.INFO,
                         logging.StreamHandler()
                     ])
 
-bot = telebot.TeleBot(tg_bot_token, parse_mode=None)
+bot = telebot.TeleBot(tg_bot_token, parse_mode="MARKDOWN")
 
 
 @bot.channel_post_handler(func=lambda message: message.chat.id != channel_chat_id)
@@ -74,13 +74,13 @@ def send_welcome(message):
 
 def send_message_to_channel(content):
     try:
-        logging.info(f'Forwarding message from mastodon to telegram.')
         toot = json.loads(content['payload'])
         logging.info('Received mastodon toot:\n' + json.dumps(toot, ensure_ascii=False, indent=2))
         if toot['account']['username'] == mastodon_username and \
                 toot['application']['name'] != mastodon_app_name and \
                 toot['in_reply_to_id'] is None and \
                 toot['visibility'] in config['scope']:
+            logging.info(f'Forwarding message from mastodon to telegram.')
             txt = markdownify(toot['content'])
             if add_link_in_telegram:
                 txt += 'from: ' + toot['url']
