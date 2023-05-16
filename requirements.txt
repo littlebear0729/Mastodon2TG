@@ -1,4 +1,12 @@
-pytelegrambotapi
-websocket-client~=1.2.1
-markdownify~=0.9.4
-requests~=2.26.0
+beautifulsoup4==4.12.2
+certifi==2023.5.7
+charset-normalizer==2.0.12
+idna==3.4
+markdownify==0.9.4
+pyTelegramBotAPI==4.11.0
+rel==0.4.8
+requests==2.26.0
+six==1.16.0
+soupsieve==2.4.1
+urllib3==1.26.15
+websocket-client==1.5.1

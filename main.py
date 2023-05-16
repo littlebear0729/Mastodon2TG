@@ -1,7 +1,7 @@
-import _thread
 import json
 import logging
 
+import rel
 import requests
 import telebot
 import websocket
@@ -114,16 +114,15 @@ def on_error(ws, error):
     logging.warning(f'Websocket Error: {error}')
 
 
-def websocketTest():
+if __name__ == '__main__':
+    bot.infinity_polling()
+
     # websocket.enableTrace(True)
     websocket.setdefaulttimeout(10)
     ws = websocket.WebSocketApp(
         f"wss://{mastodon_host}/api/v1/streaming?access_token={mastodon_api_access_token}&stream=user",
         on_message=on_message,
         on_error=on_error)
-    ws.run_forever()
-
-
-if __name__ == '__main__':
-    _thread.start_new_thread(websocketTest, ())
-    bot.infinity_polling()
+    ws.run_forever(dispatcher=rel, reconnect=5)
+    rel.signal(2, rel.abort)
+    rel.dispatch()
