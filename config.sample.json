@@ -1,12 +1,12 @@
 {
   "tg_bot_token": "",
-  "channel_chat_id": "",
-  "pm_chat_id": "",
+  "channel_chat_id": -1000000000000,
+  "pm_chat_id": 1000000000,
   "mastodon_host": "",
   "mastodon_api_access_token": "",
   "mastodon_app_name": "",
   "mastodon_username": "",
   "scope": ["public", "unlisted", "private", "direct"],
   "add_link_in_telegram": true,
-  "add_link_in_mastodon": false
+  "add_link_in_mastodon": true
 }
