@@ -8,6 +8,8 @@ import websocket
 from markdownify import markdownify
 from telebot import types
 
+import threading
+
 # Read Config
 with open('config.json', 'r') as f:
     config = json.load(f)
@@ -44,10 +46,10 @@ def send_message_to_mastodon(message):
     try:
         text = message.text
         if "#noforward" in text:
-            logging.info('Do not forward this channel message to mastodon.')
+            logging.info('Tag #noforward detected, aborting forwarding this channel message to mastodon.')
             return
         if add_link_in_mastodon:
-            link = f'from: https://t.me/c/{str(message.chat.id)[4:]}/{message.message_id}'
+            link = f'Forwarded From: https://t.me/c/{str(message.chat.id)[4:]}/{message.message_id}'
             text += f'\n\n{link}'
         header = {
             'Authorization': f'Bearer {mastodon_api_access_token}'
@@ -82,8 +84,11 @@ def send_message_to_channel(content):
                 toot['visibility'] in config['scope']:
             logging.info(f'Forwarding message from mastodon to telegram.')
             txt = markdownify(toot['content'])
+            if "#noforward" in txt:
+                logging.info(f'Tag #noforward detected, aborting forwarding this mastodon toot to telegram channel.')
+                return
             if add_link_in_telegram:
-                txt += 'from: ' + toot['url']
+                txt += 'Forwarded From: ' + toot['url']
             logging.info(f'Text sending to telegram: {txt}')
             if len(toot['media_attachments']) != 0:
                 medias = []
@@ -114,9 +119,12 @@ def on_error(ws, error):
     logging.warning(f'Websocket Error: {error}')
 
 
-if __name__ == '__main__':
+def start_polling():
     bot.infinity_polling()
 
+if __name__ == '__main__':
+    threading.Thread(target=start_polling).start()
+    
     # websocket.enableTrace(True)
     websocket.setdefaulttimeout(10)
     ws = websocket.WebSocketApp(
@@ -126,3 +134,4 @@ if __name__ == '__main__':
     ws.run_forever(dispatcher=rel, reconnect=5)
     rel.signal(2, rel.abort)
     rel.dispatch()
+
