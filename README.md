@@ -23,27 +23,46 @@ Using mastodon websocket API to fetch statuses update.
 (Video and other media type may not working...)
 
 ### Tag #noforward
-Add tag `#noforward` if you don't want to forward messages.
 
+Add tag `#noforward` if you don't want to forward messages.
 
 ## Usage
 
-Rename `config.sample.json` to `config.json`, and fill it with your own information.
+Copy .env.example
+
+```shell
+cp .env.example .env
+```
+
+Edit it with your values
+
+### Docker-compose
+
+```shell
+docker-compose up -d --build
+```
+
+### Standalone
+
+```shell
+python main.py
+```
 
 |Key|Explaination
 |:-:|:-:
-|tg_bot_token|Create a bot in Telegram using [@BotFather](https://t.me/BotFather)
+|add_link_in_mastodon|Decides whether to add a link in Telegram Channel Messages forwarded to your Mastodon Instance.
+|add_link_in_telegram|Decides whether to add a link in Toots forwarded to Telegram Channel.
 |channel_chat_id|Forward a message from your channel to [@GetIDs Bot](https://t.me/getidsbot) to get it. Should start with `-100`.
-|pm_chat_id|Your Account's ID. You will get it by forwarding a message to [@GetIDs Bot](https://t.me/getidsbot).
-|mastodon_host|Your mastodon host. e.g. `hub.example.com`
 |mastodon_api_access_token|See [How to configure your Mastodon Instance?](#how-to-configure-your-mastodon-instance).
 |mastodon_app_name|See [How to configure your Mastodon Instance?](#how-to-configure-your-mastodon-instance).
-|mastodon_username|See [How to configure your Mastodon Instance?](#how-to-configure-your-mastodon-instance).
-|scope|Determines whether a toot should be forwarded to Telegram Channel.
-|add_link_in_telegram|Decides whether to add a link in Toots forwarded to Telegram Channel.
-|add_link_in_mastodon|Decides whether to add a link in Telegram Channel Messages forwarded to your Mastodon Instance.
+|mastodon_host|Your mastodon host. e.g. `hub.example.com` from `@alice@hub.example.com`
+|mastodon_username|Your mastodon username. e.g. `alice` from `@alice@hub.example.com`
+|pm_chat_id|Your Account's ID. You will get it by forwarding a message to [@GetIDs Bot](https://t.me/getidsbot).
+|scope|Determines whether a toot should be forwarded to Telegram Channel. Possible values: public, unlisted, private, direct with `,` delimeter
+|tg_bot_token|Create a bot in Telegram using [@BotFather](https://t.me/BotFather)
 
 ### How to configure your Mastodon Instance?
+
 1. Navigate to `Settings`.
 2. In `Settings` find the `Development` section.
 3. Click on `New Application`

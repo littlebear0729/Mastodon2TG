@@ -1,28 +1,31 @@
+from dotenv import load_dotenv
+from markdownify import markdownify
+from telebot import types
 import json
 import logging
-
+import os
 import rel
 import requests
 import telebot
+import threading
 import websocket
-from markdownify import markdownify
-from telebot import types
 
 import threading
 
-# Read Config
-with open('config.json', 'r') as f:
-    config = json.load(f)
+# Load environment variables from .env file
+load_dotenv()
 
-tg_bot_token = config['tg_bot_token']
-channel_chat_id = config['channel_chat_id']
-pm_chat_id = config['pm_chat_id']
-mastodon_host = config['mastodon_host']
-mastodon_api_access_token = config['mastodon_api_access_token']
-mastodon_app_name = config['mastodon_app_name']
-mastodon_username = config['mastodon_username']
-add_link_in_telegram = config['add_link_in_telegram']
-add_link_in_mastodon = config['add_link_in_mastodon']
+# Fetch variables from environment or .env file
+tg_bot_token = os.getenv('TG_BOT_TOKEN')
+channel_chat_id = int(os.getenv('CHANNEL_CHAT_ID'))
+pm_chat_id = int(os.getenv('PM_CHAT_ID'))
+mastodon_host = os.getenv('MASTODON_HOST')
+mastodon_api_access_token = os.getenv('MASTODON_API_ACCESS_TOKEN')
+mastodon_app_name = os.getenv('MASTODON_APP_NAME')
+mastodon_username = os.getenv('MASTODON_USERNAME')
+add_link_in_telegram = os.getenv('ADD_LINK_IN_TELEGRAM') == 'True'
+add_link_in_mastodon = os.getenv('ADD_LINK_IN_MASTODON') == 'True'
+scope = os.getenv('SCOPE', 'public')  # Default to 'public' if not provided
 
 logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s %(levelname)s %(message)s',
@@ -71,38 +74,45 @@ def send_message_to_mastodon(message):
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
     logging.info(f'Received channel message from chatid: {message.chat.id} message: {message}')
-    bot.reply_to(message, "Welcome to my bot!")
+    bot.reply_to(message, "Welcome to my bot! If you want the same one for yourself, check this: https://github.com/littlebear0729/Mastodon2TG")
 
 
 def send_message_to_channel(content):
     try:
         toot = json.loads(content['payload'])
-        logging.info('Received mastodon toot:\n' + json.dumps(toot, ensure_ascii=False, indent=2))
-        if toot['account']['username'] == mastodon_username and \
-                toot['application']['name'] != mastodon_app_name and \
-                toot['in_reply_to_id'] is None and \
-                toot['visibility'] in config['scope']:
-            logging.info(f'Forwarding message from mastodon to telegram.')
-            txt = markdownify(toot['content'])
-            if "#noforward" in txt:
-                logging.info(f'Tag #noforward detected, aborting forwarding this mastodon toot to telegram channel.')
-                return
-            if add_link_in_telegram:
-                txt += 'Forwarded From: ' + toot['url']
-            logging.info(f'Text sending to telegram: {txt}')
-            if len(toot['media_attachments']) != 0:
-                medias = []
-                for i in toot['media_attachments']:
-                    if i['type'] == 'image':
-                        medias.append(types.InputMediaPhoto(i['url']))
-                    elif i['type'] == 'video':
-                        medias.append(types.InputMediaVideo(i['url']))
-                medias[0].caption = txt
-                logging.info('Sending media group to telegram channel.')
-                bot.send_media_group(channel_chat_id, medias)
-            else:
-                logging.info('Sending pure-text message to telegram channel.')
-                bot.send_message(channel_chat_id, txt, disable_web_page_preview=True)
+        if toot['account']['username'] != mastodon_username:
+            logging.info('Mastodon username does not match, skipping forwarding to Telegram.')
+            return
+        if toot['application']['name'] == mastodon_app_name:
+            logging.info('Mastodon app name matches, skipping forwarding to Telegram.')
+            return
+        if toot['in_reply_to_id'] is not None:
+            logging.info('Toot is a reply, skipping forwarding to Telegram.')
+            return
+        if toot['visibility'] not in scope:
+            logging.info('Toot visibility is not in scope, skipping forwarding to Telegram.')
+            return
+        logging.info(f'Forwarding message from mastodon to telegram.')
+        txt = markdownify(toot['content'])
+        if "#noforward" in txt:
+            logging.info(f'Tag #noforward detected, aborting forwarding this mastodon toot to telegram channel.')
+            return
+        if add_link_in_telegram:
+            txt += 'Forwarded From: ' + toot['url']
+        logging.info(f'Text sending to telegram: {txt}')
+        if len(toot['media_attachments']) != 0:
+            medias = []
+            for i in toot['media_attachments']:
+                if i['type'] == 'image':
+                    medias.append(types.InputMediaPhoto(i['url']))
+                elif i['type'] == 'video':
+                    medias.append(types.InputMediaVideo(i['url']))
+            medias[0].caption = txt
+            logging.info('Sending media group to telegram channel.')
+            bot.send_media_group(channel_chat_id, medias)
+        else:
+            logging.info('Sending pure-text message to telegram channel.')
+            bot.send_message(channel_chat_id, txt, disable_web_page_preview=True)
     except Exception as e:
         logging.warning(e)
         bot.send_message(pm_chat_id, f"Exception: {e}")
@@ -124,7 +134,7 @@ def start_polling():
 
 if __name__ == '__main__':
     threading.Thread(target=start_polling).start()
-    
+
     # websocket.enableTrace(True)
     websocket.setdefaulttimeout(10)
     ws = websocket.WebSocketApp(
