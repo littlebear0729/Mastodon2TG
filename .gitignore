@@ -1,4 +1,4 @@
-.idea/
-
-config.json*
+.*
 *.log
+!.gitignore
+!.env.example
